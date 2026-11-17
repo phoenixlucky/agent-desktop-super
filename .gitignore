@@ -17,6 +17,7 @@ __pycache__/
 dist/
 *.tar.gz
 *.zip
+!releases/agent-desktop-mcp-portable_*.zip
 *.dmg
 *.msi
 *.deb
@@ -26,6 +27,11 @@ dist/
 # npm: platform binaries fetched at install time
 npm/bin/agent-desktop-*
 node_modules/
+apps/desktop/node_modules/
+apps/desktop/dist/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/binaries/
+apps/desktop/src-tauri/gen/schemas/
 
 # Coverage
 *.profraw

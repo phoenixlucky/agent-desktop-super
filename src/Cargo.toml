@@ -5,8 +5,14 @@ edition.workspace = true
 license.workspace = true
 autotests = false
 
+[features]
+default = []
+mcp-streamable-http = ["dep:axum", "dep:getrandom", "dep:rmcp", "dep:subtle", "dep:tokio"]
+
 [dependencies]
 agent-desktop-core.workspace = true
+axum = { version = "0.8", optional = true }
+getrandom = { version = "0.3", optional = true }
 base64.workspace = true
 clap.workspace               = true
 serde.workspace              = true
@@ -14,6 +20,9 @@ serde_json.workspace         = true
 thiserror.workspace          = true
 tracing.workspace            = true
 tracing-subscriber.workspace = true
+rmcp = { version = "=3.6.0", default-features = false, features = ["server", "transport-streamable-http-server"], optional = true }
+subtle = { version = "2.6", optional = true }
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread", "signal", "sync"], optional = true }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 agent-desktop-macos = { path = "../crates/macos" }
@@ -23,6 +32,12 @@ libc.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 agent-desktop-windows = { path = "../crates/windows" }
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_JobObjects",
+  "Win32_System_Threading",
+] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 agent-desktop-linux = { path = "../crates/linux" }
@@ -31,6 +46,9 @@ agent-desktop-linux = { path = "../crates/linux" }
 windows-sys = { version = "0.61", features = [
   "Win32_Foundation",
   "Win32_Graphics_Gdi",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_JobObjects",
+  "Win32_System_Threading",
   "Win32_UI_WindowsAndMessaging",
 ] }
 
@@ -57,6 +75,10 @@ path = "tests/cli_stdin.rs"
 [[test]]
 name = "mcp_process"
 path = "tests/mcp_process.rs"
+
+[[test]]
+name = "mcp_http_process"
+path = "tests/mcp_http_process.rs"
 
 [[test]]
 name = "command_host_absent"

@@ -19,6 +19,8 @@ description: >
 
 agent-desktop is a CLI that reads and operates desktop apps through the OS accessibility tree. Every command prints one JSON envelope (`ok`, `data` or `error`). It is a tool, not an agent: the observe, act and verify loop runs in you.
 
+The CLI exposes MCP over stdio with `agent-desktop mcp`. On Windows, the optional desktop app also exposes the same tools over authenticated Streamable HTTP and generates a copyable client configuration. See the MCP guide for setup and the Windows skill for platform-specific details.
+
 ## Shell syntax
 
 Examples use a POSIX shell. In PowerShell, quote every ref (`'@s8f3k2p9:e1'`), because a bare `@token` is the splatting operator. Use `$env:NAME = 'value'` instead of `export`, and `| ConvertFrom-Json` instead of `$(...)` and `jq`. The Windows skill has the PowerShell forms.

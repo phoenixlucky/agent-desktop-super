@@ -22,12 +22,38 @@ enum Slot {
 
 /// Each admitted request id with the state of its call.
 #[derive(Default)]
-pub(crate) struct Calls(Mutex<HashMap<String, Slot>>);
+pub(crate) struct Calls(Mutex<CallsState>);
+
+#[derive(Default)]
+struct CallsState {
+    slots: HashMap<String, Slot>,
+    closed: bool,
+    #[cfg(all(windows, feature = "mcp-streamable-http"))]
+    child_job: Option<super::child_job::ChildJob>,
+}
 
 impl Calls {
+    #[cfg(feature = "mcp-streamable-http")]
+    pub(crate) fn with_child_job() -> io::Result<Self> {
+        #[cfg(all(windows, feature = "mcp-streamable-http"))]
+        {
+            let calls = Self::default();
+            calls.lock().child_job = Some(super::child_job::ChildJob::new()?);
+            Ok(calls)
+        }
+        #[cfg(not(windows))]
+        {
+            Ok(Self::default())
+        }
+    }
+
     /// Admits `id` before its call starts; false when a call with that id is already in flight.
     pub(crate) fn admit(&self, id: &Value) -> bool {
-        match self.lock().entry(id.to_string()) {
+        let mut state = self.lock();
+        if state.closed {
+            return false;
+        }
+        match state.slots.entry(id.to_string()) {
             Entry::Occupied(_) => false,
             Entry::Vacant(entry) => {
                 entry.insert(Slot::Admitted);
@@ -41,21 +67,31 @@ impl Calls {
     /// starts, or after it, and the child is killed.
     pub(crate) fn start(&self, id: &Value, command: &mut Command) -> Option<io::Result<Pipes>> {
         let mut calls = self.lock();
-        let slot = calls.get_mut(&id.to_string())?;
-        if matches!(slot, Slot::Cancelled) {
+        let key = id.to_string();
+        if matches!(calls.slots.get(&key), None | Some(Slot::Cancelled)) {
             return None;
         }
-        Some(command.spawn().map(|mut child| {
-            let pipes = (child.stdout.take(), child.stderr.take());
-            *slot = Slot::Running(child);
-            pipes
-        }))
+        #[cfg(all(windows, feature = "mcp-streamable-http"))]
+        let spawned = if let Some(job) = &calls.child_job {
+            job.spawn(command)
+        } else {
+            command.spawn()
+        };
+        #[cfg(not(all(windows, feature = "mcp-streamable-http")))]
+        let spawned = command.spawn();
+        let mut child = match spawned {
+            Ok(child) => child,
+            Err(error) => return Some(Err(error)),
+        };
+        let pipes = (child.stdout.take(), child.stderr.take());
+        calls.slots.insert(key, Slot::Running(child));
+        Some(Ok(pipes))
     }
 
     /// Takes back the child of `id` after its output closed, or `None` when `id` was cancelled.
     pub(crate) fn take(&self, id: &Value) -> Option<Child> {
         let mut calls = self.lock();
-        let slot = calls.get_mut(&id.to_string())?;
+        let slot = calls.slots.get_mut(&id.to_string())?;
         match std::mem::replace(slot, Slot::Admitted) {
             Slot::Running(child) => Some(child),
             other => {
@@ -69,6 +105,7 @@ impl Calls {
     pub(crate) fn cancel(&self, id: &Value) {
         let slot = self
             .lock()
+            .slots
             .get_mut(&id.to_string())
             .map(|slot| std::mem::replace(slot, Slot::Cancelled));
         if let Some(Slot::Running(child)) = slot {
@@ -76,14 +113,34 @@ impl Calls {
         }
     }
 
+    #[cfg(feature = "mcp-streamable-http")]
+    pub(crate) fn cancel_all(&self) {
+        let children = {
+            let mut state = self.lock();
+            state.closed = true;
+            state
+                .slots
+                .values_mut()
+                .filter_map(|slot| match std::mem::replace(slot, Slot::Cancelled) {
+                    Slot::Running(child) => Some(child),
+                    _ => None,
+                })
+                .collect::<Vec<_>>()
+        };
+        for child in children {
+            std::thread::spawn(move || terminate(child));
+        }
+    }
+
     /// Releases `id` once its call has returned; false when it was cancelled, so no response is due.
     pub(crate) fn finish(&self, id: &Value) -> bool {
         self.lock()
+            .slots
             .remove(&id.to_string())
             .is_some_and(|slot| !matches!(slot, Slot::Cancelled))
     }
 
-    fn lock(&self) -> MutexGuard<'_, HashMap<String, Slot>> {
+    fn lock(&self) -> MutexGuard<'_, CallsState> {
         self.0.lock().unwrap_or_else(PoisonError::into_inner)
     }
 }

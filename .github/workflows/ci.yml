@@ -395,6 +395,14 @@ jobs:
       - name: Install Rust toolchain
         run: rustup show
 
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
       # Core resolves its home directory from HOME, then USERPROFILE (crates/core/src/refs/mod.rs), so the lane points both at a throwaway directory.
       - name: Isolate HOME for the whole lane
         shell: pwsh
@@ -509,6 +517,24 @@ jobs:
 
       - name: Binary command tests
         run: cargo test --locked -p agent-desktop
+
+      - name: MCP Streamable HTTP process tests
+        run: cargo test --locked -p agent-desktop --features mcp-streamable-http --test mcp_http_process
+
+      - name: Desktop package contract
+        run: python -m unittest scripts.tests.test_desktop_package -v
+
+      - name: Desktop UI tests and build
+        working-directory: apps/desktop
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Desktop host Rust tests and lint
+        run: |
+          cargo test --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --lib
+          cargo clippy --locked --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
 
       - name: FFI integration tests
         run: cargo test --locked -p agent-desktop-ffi --tests

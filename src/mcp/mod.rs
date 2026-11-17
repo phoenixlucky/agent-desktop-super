@@ -3,6 +3,10 @@
 mod call;
 mod calls;
 mod catalog;
+#[cfg(all(windows, feature = "mcp-streamable-http"))]
+mod child_job;
+#[cfg(feature = "mcp-streamable-http")]
+mod http;
 
 use clap::{ArgAction, ArgMatches, Command, CommandFactory, parser::ValueSource};
 use serde_json::{Map, Value, json};
@@ -36,14 +40,24 @@ again. Repeat an action only when its disposition.retry is \"safe\".";
 
 /// The `mcp` subcommand; it lives outside `Commands` because it serves commands rather than being one.
 pub(crate) fn command() -> Command {
-    Command::new("mcp").about(
+    let command = Command::new("mcp").about(
         "Serve every command as an MCP tool over stdio; global flags given here apply to every call",
-    )
+    );
+    #[cfg(feature = "mcp-streamable-http")]
+    let command = http::command_arg(command);
+    command
 }
 
 /// Serves MCP over stdin and stdout until stdin closes, then finishes the tool calls already running.
 /// At most `MAX_CONCURRENT_CALLS` calls run at once, and a message longer than `MAX_MESSAGE_BYTES` is refused unread.
 pub(crate) fn serve(matches: &ArgMatches) -> ExitCode {
+    #[cfg(feature = "mcp-streamable-http")]
+    if matches
+        .get_one::<String>("transport")
+        .is_some_and(|transport| transport == "streamable-http")
+    {
+        return http::serve(matches);
+    }
     let server = Arc::new(Server {
         tools: catalog::tools(),
         globals: forwarded_globals(matches),

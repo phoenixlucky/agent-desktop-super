@@ -19,6 +19,16 @@ description: >
 This file covers only what differs on Windows. The observe-act loop, refs, JSON
 envelope, sessions and tracing are the same on every platform.
 
+## MCP desktop service
+
+For a local HTTP MCP endpoint, run `scripts/build-desktop.bat` from a source
+checkout and install the generated `dist/agent-desktop-desktop_<version>_x64-setup.exe`.
+The app starts the server at `http://127.0.0.1:12899/desktop` and generates a
+fresh bearer token in memory. Copy the JSON from the app into the MCP client's
+configuration. Stopping or restarting the server changes the token, so copy
+the new configuration into clients again. The endpoint is loopback-only; use
+the regular `agent-desktop mcp` stdio setup when a client runs on another host.
+
 Requires Windows 10 1809+ / Windows Server 2019+ (x64 or ARM64). Run it in the
 interactive desktop session of the signed-in user. Session 0 (services and
 SYSTEM tasks), Server Core, the secure desktop (UAC prompts, the sign-in

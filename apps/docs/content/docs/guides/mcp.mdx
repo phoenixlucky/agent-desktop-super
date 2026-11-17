@@ -1,7 +1,7 @@
 ---
 title: Using agent-desktop over MCP
 navTitle: MCP
-description: Serve every agent-desktop command as an MCP tool over stdio. How tools map to commands, how global flags apply, and what a tool returns.
+description: Serve every agent-desktop command as an MCP tool over stdio, or use the Windows desktop app for Streamable HTTP.
 ---
 
 `agent-desktop mcp` runs a Model Context Protocol server over stdio. Every command is a tool, so an MCP client gets the same surface as the CLI with no separate setup.
@@ -19,6 +19,28 @@ Add the server to your client's MCP configuration:
 ```
 
 The server speaks both the stateless `2026-07-28` protocol and the `initialize` handshake of `2025-11-25` and earlier.
+
+## Windows desktop service
+
+The Windows desktop app starts an authenticated Streamable HTTP service at `http://127.0.0.1:12899/desktop`. Run `scripts/build-desktop.bat` to create `releases/agent-desktop-mcp-portable_<version>_x64.zip`. Extract the ZIP and launch `agent-desktop-mcp-console.exe`; keep `agent-desktop.exe` in the same folder as the MCP sidecar. Copy the generated configuration from the app's connection card. The app creates a fresh token each time the service starts; stopping or restarting the service invalidates the previous token.
+
+The copied JSON has this shape, with the active token filled in by the app:
+
+```json
+{
+  "mcpServers": {
+    "agent-desktop": {
+      "type": "streamable-http",
+      "url": "http://127.0.0.1:12899/desktop",
+      "headers": {
+        "Authorization": "Bearer <generated-token>"
+      }
+    }
+  }
+}
+```
+
+Paste the copied object into an MCP client's configuration and restart or reload that client. The service binds only to loopback and is available on the same computer. The app displays the current URL, token, configuration, tool count and service state, and can stop, restart or rotate the token. The existing stdio configuration above remains available on every supported platform.
 
 ## How tools map to commands
 

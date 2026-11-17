@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class DesktopPackageContractTests(unittest.TestCase):
     def test_batch_builds_a_portable_windows_zip_with_its_sidecar(self):
-        script = (ROOT / "scripts" / "build-desktop.bat").read_text(encoding="utf-8").lower()
+        script = (ROOT / "build-desktop.bat").read_text(encoding="utf-8").lower()
         for required in (
             "where.exe node",
             "where.exe npm",

@@ -1,3 +1,5 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use agent_desktop_mcp_console::service::{
     ReadyEvent, SHELL_SIDECAR_NAME, ServiceSnapshot, request_shutdown, terminate_process_tree,
     wait_for_port_release,

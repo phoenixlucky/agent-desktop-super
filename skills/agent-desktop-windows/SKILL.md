@@ -21,8 +21,8 @@ envelope, sessions and tracing are the same on every platform.
 
 ## MCP desktop service
 
-For a local HTTP MCP endpoint, run `scripts/build-desktop.bat` from a source
-checkout and install the generated `dist/agent-desktop-desktop_<version>_x64-setup.exe`.
+For a local HTTP MCP endpoint, run `build-desktop.bat` from the repository root
+and install the generated `dist/agent-desktop-desktop_<version>_x64-setup.exe`.
 The app starts the server at `http://127.0.0.1:12899/desktop` and generates a
 fresh bearer token in memory. Copy the JSON from the app into the MCP client's
 configuration. Stopping or restarting the server changes the token, so copy

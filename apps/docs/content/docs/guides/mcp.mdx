@@ -22,7 +22,7 @@ The server speaks both the stateless `2026-07-28` protocol and the `initialize` 
 
 ## Windows desktop service
 
-The Windows desktop app starts an authenticated Streamable HTTP service at `http://127.0.0.1:12899/desktop`. Run `scripts/build-desktop.bat` to create `releases/agent-desktop-mcp-portable_<version>_x64.zip`. Extract the ZIP and launch `agent-desktop-mcp-console.exe`; keep `agent-desktop.exe` in the same folder as the MCP sidecar. Copy the generated configuration from the app's connection card. The app creates a fresh token each time the service starts; stopping or restarting the service invalidates the previous token.
+The Windows desktop app starts an authenticated Streamable HTTP service at `http://127.0.0.1:12899/desktop`. Run `build-desktop.bat` from the repository root to create `releases/agent-desktop-mcp-portable_<version>_x64.zip`. Extract the ZIP and launch `agent-desktop-mcp-console.exe`; keep `agent-desktop.exe` in the same folder as the MCP sidecar. Copy the generated configuration from the app's connection card. The app creates a fresh token each time the service starts; stopping or restarting the service invalidates the previous token.
 
 The copied JSON has this shape, with the active token filled in by the app:
 

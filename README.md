@@ -123,7 +123,7 @@ Retry a failed command only when `error.disposition.retry` is `safe`. See [JSON 
 
 Global flags given to `mcp`, such as `--session`, `--headed` or `--trace`, apply to every call except `sandbox exec`, whose guest command takes its own flags.
 
-On Windows, `scripts/build-desktop.bat` builds the MCP desktop app and its NSIS installer. The app starts an authenticated Streamable HTTP endpoint at `http://127.0.0.1:12899/desktop` and displays a copyable client configuration with a fresh token. See the [MCP guide](https://agent-browser.dev/desktop/guides/mcp) for setup and token rotation.
+On Windows, `build-desktop.bat` in the repository root builds the MCP desktop app and its NSIS installer. The app starts an authenticated Streamable HTTP endpoint at `http://127.0.0.1:12899/desktop` and displays a copyable client configuration with a fresh token. See the [MCP guide](https://agent-browser.dev/desktop/guides/mcp) for setup and token rotation.
 
 ## Commands
 
